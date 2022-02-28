@@ -264,11 +264,8 @@ class DefaultThumbnailsEngine(
 
         forEach {
             val nextKeyFrameIndex = source.search(it.positionUs)
-            val previousKeyFrameUs =
-                source.keyFrameTimestampsUsList[
-                        if (nextKeyFrameIndex > 0)
-                            nextKeyFrameIndex - 1 else (source.keyFrameTimestampsUsList.size - 1)
-                ]
+            val previousKeyFrameUs = source.keyFrameAt(nextKeyFrameIndex - 1) { source.lastKeyFrame() }
+
             val list = bucketListMap.getOrPut(previousKeyFrameUs) { ArrayList<Stub>() }
             list.add(it)
         }
