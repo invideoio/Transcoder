@@ -77,8 +77,6 @@ class DefaultThumbnailsEngine(
     }
 
     private val stubs = ArrayDeque<Stub>()
-    private val bucketListMap = LinkedHashMap<Long, ArrayList<Stub>>()
-    private val finalList = ArrayList<Stub>()
 
     private inner class IgnoringEosDataSource(
         private val source: DataSource,
@@ -256,33 +254,28 @@ class DefaultThumbnailsEngine(
                 val localizedUs = timer.localize(TrackType.VIDEO, index, positionUs)
                 localizedUs?.let { Stub(request, positionUs, localizedUs) }
 //            }.toMutableList().sortedBy { it.positionUs }
-            }.toMutableList().reorder(dataSources[TrackType.VIDEO][0].keyFrameTimestampsUs)
+            }.toMutableList().reorder(dataSources[TrackType.VIDEO][0])
         )
     }
 
-    private fun  List<Stub>.reorder(keyFrameTimestampsUs: ArrayList<Long>): Collection<Stub> {
-        if(keyFrameTimestampsUs.isEmpty())
-            return this
-        bucketListMap.clear()
-        finalList.clear()
+    private fun  List<Stub>.reorder(source: DataSource): Collection<Stub> {
+        val bucketListMap = LinkedHashMap<Long, ArrayList<Stub>>()
+        val finalList = ArrayList<Stub>()
 
         forEach {
-            val keyFrame = findPrevKeyFrame(it.positionUs, keyFrameTimestampsUs)
-            val list = bucketListMap.getOrPut(keyFrame) { ArrayList<Stub>() }
+            val nextKeyFrameIndex = source.search(it.positionUs)
+            val previousKeyFrameUs =
+                source.keyFrameTimestampsUsList[
+                        if (nextKeyFrameIndex > 0)
+                            nextKeyFrameIndex - 1 else (source.keyFrameTimestampsUsList.size - 1)
+                ]
+            val list = bucketListMap.getOrPut(previousKeyFrameUs) { ArrayList<Stub>() }
             list.add(it)
         }
         bucketListMap.forEach {
             finalList.addAll(it.value.sortedBy { it.positionUs })
         }
         return finalList
-    }
-
-    private fun findPrevKeyFrame(positionUs: Long, keyFrameTimestampsUs: ArrayList<Long>): Long {
-        for(i in 0 until keyFrameTimestampsUs.size) {
-            if(positionUs < keyFrameTimestampsUs[i])
-                return keyFrameTimestampsUs[i-1]
-        }
-        return -1
     }
 
     private val fetchPosition: () -> VideoSnapshots.Request? = {
