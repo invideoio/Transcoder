@@ -84,8 +84,8 @@ class DefaultThumbnailsEngine(
         override fun requestKeyFrameTimestamps(): Long {
             return source.requestKeyFrameTimestamps()
         }
-        override fun getKeyFrameTimestampsUs(): ArrayList<Long> {
-            return source.keyFrameTimestampsUs
+        override fun getKeyFrameTimestampsUsList(): ArrayList<Long> {
+            return source.keyFrameTimestampsUsList
         }
 
         override fun isDrained(): Boolean {
@@ -119,11 +119,11 @@ class DefaultThumbnailsEngine(
                 val nextKeyFrameIndex = source.search(requested)
 
                 val nextKeyFrameUs =
-                    if (nextKeyFrameIndex == -1) Long.MAX_VALUE else source.keyFrameTimestampsUs[nextKeyFrameIndex]
+                    if (nextKeyFrameIndex == -1) Long.MAX_VALUE else source.keyFrameTimestampsUsList[nextKeyFrameIndex]
                 val previousKeyFrameUs =
-                    source.keyFrameTimestampsUs[
+                    source.keyFrameTimestampsUsList[
                         if (nextKeyFrameIndex > 0)
-                            nextKeyFrameIndex - 1 else (source.keyFrameTimestampsUs.size - 1)
+                            nextKeyFrameIndex - 1 else (source.keyFrameTimestampsUsList.size - 1)
                     ]
 
                 log.i(
@@ -171,17 +171,17 @@ class DefaultThumbnailsEngine(
     private lateinit var progress: (Thumbnail) -> Unit
 
     private fun DataSource.search(timestampUs: Long): Int {
-        if (keyFrameTimestampsUs.isEmpty())
+        if (keyFrameTimestampsUsList.isEmpty())
             requestKeyFrameTimestamps()
 
-        val searchIndex = keyFrameTimestampsUs.binarySearch(timestampUs)
+        val searchIndex = keyFrameTimestampsUsList.binarySearch(timestampUs)
 
         val nextKeyFrameIndex = when {
             searchIndex >= 0 -> searchIndex
             searchIndex < 0 -> {
                 val index = -searchIndex - 1
                 when {
-                    index >= keyFrameTimestampsUs.size -> {
+                    index >= keyFrameTimestampsUsList.size -> {
                         val ts = requestKeyFrameTimestamps()
                         if (ts == -1L) {
                             -1
@@ -189,7 +189,7 @@ class DefaultThumbnailsEngine(
                             search(timestampUs)
                         }
                     }
-                    index < keyFrameTimestampsUs.size -> index
+                    index < keyFrameTimestampsUsList.size -> index
                     else -> {
                         -1 // will never reach here. kotlin is stupid
                     }

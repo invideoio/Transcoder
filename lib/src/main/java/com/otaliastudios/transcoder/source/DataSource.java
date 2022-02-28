@@ -114,7 +114,7 @@ public interface DataSource {
 
     default long requestKeyFrameTimestamps() { return -1;}
 
-    default ArrayList<Long> getKeyFrameTimestampsUs() {
+    default ArrayList<Long> getKeyFrameTimestampsUsList() {
         return new ArrayList<>();
     }
     /**
