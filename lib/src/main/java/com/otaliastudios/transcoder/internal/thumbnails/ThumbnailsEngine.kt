@@ -5,14 +5,19 @@ package com.otaliastudios.transcoder.internal.thumbnails
 import com.otaliastudios.transcoder.ThumbnailerOptions
 import com.otaliastudios.transcoder.internal.DataSources
 import com.otaliastudios.transcoder.internal.utils.Logger
+import com.otaliastudios.transcoder.source.DataSource
 import com.otaliastudios.transcoder.thumbnail.Thumbnail
 import com.otaliastudios.transcoder.thumbnail.ThumbnailRequest
 
 abstract class ThumbnailsEngine {
 
+    abstract fun addDataSource(dataSource: DataSource)
+
+    abstract fun removeDataSource(dataSourceId: String)
+
     abstract suspend fun queueThumbnails(list: List<ThumbnailRequest>, progress: (Thumbnail) -> Unit)
 
-    abstract suspend fun removePosition(positionUs: Long)
+    abstract suspend fun removePosition(source: String, positionUs: Long)
 
     abstract fun cleanup()
 
@@ -43,24 +48,5 @@ abstract class ThumbnailsEngine {
             return engine
         }
     }
-    suspend fun queue(list: List<ThumbnailRequest>) {
-        engine?.queueThumbnails(list) {
-            dispatcher.dispatchThumbnail(it)
-        }
 
-        try {
-            dispatcher.dispatchCompletion()
-        } catch (e: Exception) {
-            if (e.isInterrupted()) {
-                log.i("Transcode canceled.", e)
-                dispatcher.dispatchCancel()
-            } else {
-                log.e("Unexpected error while transcoding.", e)
-                dispatcher.dispatchFailure(e)
-                throw e
-            }
-        } finally {
-            engine?.cleanup()
-        }
-    }
 }

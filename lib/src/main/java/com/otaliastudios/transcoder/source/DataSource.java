@@ -118,6 +118,7 @@ public interface DataSource {
         return new ArrayList<>();
     }
 
+    default String mediaId() { return "";}
     /**
      * Rewinds this source, moving it to its default state.
      * To be used again, tracks will be selected again.
