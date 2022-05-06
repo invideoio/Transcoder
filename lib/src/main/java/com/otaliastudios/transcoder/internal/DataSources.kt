@@ -69,7 +69,7 @@ class DataSources constructor(
 
     fun addVideoDataSource(dataSource: DataSource) {
         dataSource.init()
-        if (dataSource.getTrackFormat(TrackType.VIDEO) != null) {
+        if (dataSource.getTrackFormat(TrackType.VIDEO) != null && dataSource !in videoSources) {
             videoSources = videoSources + dataSource
         }
     }

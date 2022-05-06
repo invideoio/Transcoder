@@ -229,12 +229,13 @@ class DefaultThumbnailsEngine(
                 request.locate(duration).map { it to request }
             }.sortedBy { it.first }
             val index = dataSources[TrackType.VIDEO].indexOfFirst { it.mediaId() == entry.key }
-            stubs.addAll(
-                positions.mapNotNull { (positionUs, request) ->
-                    val localizedUs = timer.localize(TrackType.VIDEO, index, positionUs)
-                    localizedUs?.let { Stub(request, positionUs, localizedUs) }
-                }.toMutableList().reorder(dataSources[TrackType.VIDEO][index])
-            )
+            if (index >= 0) {
+                stubs.addAll(
+                    positions.mapNotNull { (positionUs, request) ->
+                        Stub(request, positionUs, positionUs)
+                    }.toMutableList().reorder(dataSources[TrackType.VIDEO][index])
+                )
+            }
                 log.i("Updating pipeline positions for segment Index#$index absoluteUs=${positions.joinToString { it.first.toString() }}, and stubs $stubs")
         }
 
@@ -270,6 +271,14 @@ class DefaultThumbnailsEngine(
         val stub = stubs.find {it.request.sourceId() == source &&  it.positionUs == locatedTimestampUs }
         if (stub != null) {
             log.i("removePosition Match: $positionUs :$stubs")
+            stubs.remove(stub)
+            shouldSeek = true
+        }
+    }
+
+    override suspend fun removeAllPositions(source: String) {
+        val stub = stubs.find {it.request.sourceId() == source}
+        if (stub != null) {
             stubs.remove(stub)
             shouldSeek = true
         }
