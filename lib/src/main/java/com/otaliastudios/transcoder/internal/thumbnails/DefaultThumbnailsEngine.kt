@@ -26,8 +26,11 @@ import com.otaliastudios.transcoder.thumbnail.SingleThumbnailRequest
 import com.otaliastudios.transcoder.thumbnail.Thumbnail
 import com.otaliastudios.transcoder.thumbnail.ThumbnailRequest
 import com.otaliastudios.transcoder.time.DefaultTimeInterpolator
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import java.util.ArrayList
 
@@ -157,13 +160,16 @@ class DefaultThumbnailsEngine(
                                 "deltaUs=${stub.localizedUs - stub.actualLocalizedUs}"
                         )
                         val thumbnail = Thumbnail(stub.request, stub.positionUs, bitmap)
-                        progress(thumbnail)
+                        val status = progress.trySend(thumbnail)
+                        log.i("Callback Send Status ${status.isSuccess}")
                     }
                 }
         }
     }
 
-    private lateinit var progress: (Thumbnail) -> Unit
+    private val progress = Channel<Thumbnail>(Channel.BUFFERED)
+
+    override val progressFlow: Flow<Thumbnail> = progress.receiveAsFlow()
 
     private fun DataSource.lastKeyFrame() = keyFrameAt(keyFrameTimestamps.size - 1)
 
@@ -217,11 +223,9 @@ class DefaultThumbnailsEngine(
         tracks.updateTracksInfo()
     }
 
-    override suspend fun queueThumbnails(list: List<ThumbnailRequest>, progress: (Thumbnail) -> Unit) {
+    override suspend fun queueThumbnails(list: List<ThumbnailRequest>) {
 
         val map = list.groupBy { it.sourceId() }
-
-        this.progress = progress
 
         map.forEach { entry ->
             val positions = entry.value.flatMap { request ->
@@ -271,14 +275,6 @@ class DefaultThumbnailsEngine(
         val stub = stubs.find {it.request.sourceId() == source &&  it.positionUs == locatedTimestampUs }
         if (stub != null) {
             log.i("removePosition Match: $positionUs :$stubs")
-            stubs.remove(stub)
-            shouldSeek = true
-        }
-    }
-
-    override suspend fun removeAllPositions(source: String) {
-        val stub = stubs.find {it.request.sourceId() == source}
-        if (stub != null) {
             stubs.remove(stub)
             shouldSeek = true
         }

@@ -8,18 +8,19 @@ import com.otaliastudios.transcoder.internal.utils.Logger
 import com.otaliastudios.transcoder.source.DataSource
 import com.otaliastudios.transcoder.thumbnail.Thumbnail
 import com.otaliastudios.transcoder.thumbnail.ThumbnailRequest
+import kotlinx.coroutines.flow.Flow
 
 abstract class ThumbnailsEngine {
+
+    abstract val progressFlow: Flow<Thumbnail>
 
     abstract fun addDataSource(dataSource: DataSource)
 
     abstract fun removeDataSource(dataSourceId: String)
 
-    abstract suspend fun queueThumbnails(list: List<ThumbnailRequest>, progress: (Thumbnail) -> Unit)
+    abstract suspend fun queueThumbnails(list: List<ThumbnailRequest>)
 
     abstract suspend fun removePosition(source: String, positionUs: Long)
-
-    abstract suspend fun removeAllPositions(source: String)
 
     abstract fun cleanup()
 
