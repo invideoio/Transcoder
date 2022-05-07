@@ -130,11 +130,13 @@ class DefaultThumbnailsEngine(
                 seekUs =
                     (if (nextKeyFrameInThreshold) nextKeyFrameUs else previousKeyFrameUs) + source.seekThreshold
 
-                log.i(
-                    "seek: current ${source.positionUs}," +
-                            " requested $requested, threshold $threshold, nextKeyFrameUs $nextKeyFrameUs," +
-                            " nextKeyFrameInThreshold:$nextKeyFrameInThreshold, seekUs: $seekUs, flushing : $seek"
-                )
+                if (VERBOSE) {
+                    log.i(
+                        "seek: current ${source.positionUs}," +
+                                " requested $requested, threshold $threshold, nextKeyFrameUs $nextKeyFrameUs," +
+                                " nextKeyFrameInThreshold:$nextKeyFrameInThreshold, seekUs: $seekUs, flushing : $seek"
+                    )
+                }
 
                 shouldFlush = seek
                 shouldSeek = false
@@ -292,5 +294,6 @@ class DefaultThumbnailsEngine(
 
     companion object {
         private const val WAIT_MS = 5L
+        private const val VERBOSE = false
     }
 }
