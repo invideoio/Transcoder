@@ -43,9 +43,7 @@ class CustomSegments(
 
     fun getSegment(id: String): Segment? {
         return segmentMap.getOrPut(id) {
-            if (currentSegment != null) {
-                destroySegment(currentSegment)
-            }
+            destroySegment(currentSegment)
             tryCreateSegment(id).also {
                 currentSegment = it
             }
