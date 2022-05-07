@@ -90,6 +90,7 @@ class Decoder(
         dequeuedInputs--
         val (chunk, id) = data
         val flag = if (chunk.keyframe) BUFFER_FLAG_SYNC_FRAME else 0
+        log.v("enqueue(): queueInputBuffer ${chunk.timeUs}")
         codec.queueInputBuffer(id, chunk.buffer.position(), chunk.buffer.remaining(), chunk.timeUs, flag)
         dropper.input(chunk.timeUs, chunk.render)
     }
@@ -123,11 +124,13 @@ class Decoder(
                     // Ideally, we shouldn't rely on the fact that the buffer is properly configured.
                     // We should configure its position and limit based on the buffer info's position and size.
                     val data = DecoderData(buffer, timeUs) {
+                        log.v("drain(): released successfully presentation ts ${info.presentationTimeUs} and $timeUs")
                         codec.releaseOutputBuffer(result, it)
                         dequeuedOutputs--
                     }
                     if (isEos) State.Eos(data) else State.Ok(data)
                 } else {
+                    log.v("drain(): released because decoder dropper gave null ts ${info.presentationTimeUs}")
                     codec.releaseOutputBuffer(result, false)
                     State.Wait
                 }.also {
