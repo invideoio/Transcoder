@@ -43,14 +43,14 @@ class CustomSegments(
 
     fun getSegment(id: String): Segment? {
         return segmentMap.getOrPut(id) {
-            destroySegment(currentSegment)
+            destroySegment(id)
             tryCreateSegment(id).also {
                 currentSegment = it
             }
         }
     }
 
-    fun release() = destroySegment(currentSegment)
+    fun release() = destroySegment()
 
     private fun tryCreateSegment(id: String): Segment? {
         val index = sources[TrackType.VIDEO].indexOfFirst { it.mediaId() == id }
@@ -74,21 +74,19 @@ class CustomSegments(
         return Segment(TrackType.VIDEO, index, pipeline)
     }
 
-    private fun destroySegment(segment: Segment?) {
-        segment?.let {
-            segment.release()
-            val source = sources[segment.type][segment.index]
-            if (tracks.active.has(segment.type)) {
-                source.releaseTrack(segment.type)
+    private fun destroySegment(id: String? = null) {
+        currentSegment?.let {
+            it.release()
+            val source = sources[it.type][it.index]
+            if (tracks.active.has(it.type)) {
+                source.releaseTrack(it.type)
             }
-//            source.deinit()
-            val reversed = segmentMap.entries.associate { (k, v) -> v to k }
-
-            val resultKey = reversed[segment]
-
-            resultKey?.let {
-                segmentMap[it] = null
-            }
+        }
+        if (id == null) {
+            segmentMap.clear()
+        }
+        else {
+            segmentMap[id] = null
         }
     }
     private fun DataSource.init() = if (!isInitialized) initialize() else Unit
