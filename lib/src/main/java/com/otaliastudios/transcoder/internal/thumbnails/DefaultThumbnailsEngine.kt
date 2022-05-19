@@ -221,8 +221,9 @@ class DefaultThumbnailsEngine(
         return nextKeyFrameIndex
     }
 
-    override  fun addDataSource(dataSource: DataSource) {
-        dataSources.addVideoDataSource(dataSource)
+    override fun addDataSource(dataSource: DataSource) {
+        val added = dataSources.addVideoDataSource(dataSource)
+        if (!added) return
         tracks.updateTracksInfo()
         if (tracks.active.has(TrackType.VIDEO)) {
             dataSource.selectTrack(TrackType.VIDEO)

@@ -71,19 +71,24 @@ class DataSources constructor(
         addAudioDataSource(dataSource)
     }
 
-    fun addVideoDataSource(dataSource: DataSource) {
-        if (existsInSources(dataSource, videoSources)) return
+    fun addVideoDataSource(dataSource: DataSource): Boolean {
+        if (existsInSources(dataSource, videoSources)) return false
         dataSource.init()
         if (dataSource.getTrackFormat(TrackType.VIDEO) != null && dataSource !in videoSources) {
             videoSources = videoSources + dataSource
+            return true
         }
+        return false
     }
-    fun addAudioDataSource(dataSource: DataSource) {
-        if (existsInSources(dataSource, audioSources)) return
+
+    fun addAudioDataSource(dataSource: DataSource): Boolean {
+        if (existsInSources(dataSource, audioSources)) return false
         dataSource.init()
         if (dataSource.getTrackFormat(TrackType.AUDIO) != null) {
             audioSources = audioSources + dataSource
+            return true
         }
+        return false
     }
 
     fun removeDataSource(dataSourceId: String) {
