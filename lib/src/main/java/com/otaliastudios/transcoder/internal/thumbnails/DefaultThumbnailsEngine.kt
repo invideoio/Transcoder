@@ -222,8 +222,10 @@ class DefaultThumbnailsEngine(
     }
 
     override fun addDataSource(dataSource: DataSource) {
-        val added = dataSources.addVideoDataSource(dataSource)
-        if (!added) return
+        if (dataSources.getVideoSources().find { it.mediaId() == dataSource.mediaId() } != null) {
+            return // dataSource already exists
+        }
+        dataSources.addVideoDataSource(dataSource)
         tracks.updateTracksInfo()
         if (tracks.active.has(TrackType.VIDEO)) {
             dataSource.selectTrack(TrackType.VIDEO)
