@@ -286,13 +286,13 @@ class DefaultThumbnailsEngine(
     }
 
     override suspend fun removePosition(source: String, positionUs: Long) {
-        if (stubs.firstOrNull()?.request?.sourceId() == source && positionUs == stubs.firstOrNull()?.positionUs) {
-            return
-        }
         if (positionUs < 0) {
             stubs.removeAll{
                 it.request.sourceId() == source
             }
+        }
+        if (stubs.firstOrNull()?.request?.sourceId() == source && positionUs == stubs.firstOrNull()?.positionUs) {
+            return
         }
         val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(timer.durationUs.video)[0]
         val stub = stubs.find {it.request.sourceId() == source &&  it.positionUs == locatedTimestampUs }
@@ -326,6 +326,7 @@ class DefaultThumbnailsEngine(
     }
 
     override fun cleanup() {
+        runCatching { stubs.clear() }
         runCatching { segments.release() }
         runCatching { dataSources.release() }
     }
