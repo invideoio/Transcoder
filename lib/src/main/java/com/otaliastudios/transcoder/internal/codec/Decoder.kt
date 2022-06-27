@@ -34,6 +34,7 @@ interface DecoderChannel : Channel {
 class Decoder(
     private val format: MediaFormat, // source.getTrackFormat(track)
     continuous: Boolean, // relevant if the source sends no-render chunks. should we compensate or not?
+    useSwFor4K: Boolean = false,
     val shouldFlush: (() -> Boolean)? = null
 ) : QueuedStep<ReaderData, ReaderChannel, DecoderData, DecoderChannel>(), ReaderChannel {
 
@@ -46,8 +47,9 @@ class Decoder(
     private val log = Logger("Decoder(${format.trackType},${ID[format.trackType].getAndIncrement()})")
     override val channel = this
 
-    private val codec = createDecoderByType(format, format.is4K())
+    private val codec = createDecoderByType(format, useSwFor4K && format.is4K())
 
+    @Suppress("MagicNumber")
     private fun MediaFormat.is4K(): Boolean {
         val width = format.getInteger(MediaFormat.KEY_WIDTH)
         val height = format.getInteger(MediaFormat.KEY_HEIGHT)
@@ -58,9 +60,17 @@ class Decoder(
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             isHardwareAccelerated
         } else {
-            val isSoftware = (name.startsWith("OMX.google.") || name.startsWith("c2.android"))
+            val codecName = name.lowercase()
+            val isSoftware = (codecName.startsWith("omx.google.")
+                    || codecName.startsWith("omx.ffmpeg.")
+                    || (codecName.startsWith("omx.sec.") && codecName.contains(".sw."))
+                    || codecName == "omx.qcom.video.decoder.hevcswvdec"
+                    || codecName.startsWith("c2.android.")
+                    || codecName.startsWith("c2.google.")
+                    || (!codecName.startsWith("omx.") && !codecName.startsWith("c2.")))
+
             if (isSoftware) {
-                log.d("sw codec: $name")
+                log.i("sw codec: $name")
             }
             !isSoftware
         }
@@ -73,18 +83,23 @@ class Decoder(
 
             var codecName: String? = null
             for (info in allCodecs.codecInfos) {
-                if (!info.isEncoder && (info.isHardwareAcceleratedCompat() && useSoftware)) {
+                if (info.isEncoder || (info.isHardwareAcceleratedCompat() && useSoftware)) {
+                    // log.e("Rejecting codec: ${info.name}")
                     continue
                 }
                 try {
                     val caps = info.getCapabilitiesForType(mime)
                     if (caps != null && caps.isFormatSupported(format)) {
                         codecName = info.name
+                        break
+                    } else {
+                        // log.e("Rejecting decoder: ${info.name}")
                     }
                 } catch (e: IllegalArgumentException) {
                     log.e("Unsupported codec type: $mime")
                 }
             }
+            log.i("Using codec: $codecName for format: $format")
             return createByCodecName(codecName!!)
         }
         return createDecoderByType(mime)
