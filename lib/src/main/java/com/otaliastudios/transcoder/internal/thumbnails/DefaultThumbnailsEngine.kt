@@ -240,6 +240,27 @@ class DefaultThumbnailsEngine(
         tracks.updateTracksInfo()
     }
 
+    override fun updateDataSources(dataSourcesNew: List<DataSource>) {
+        val currentVideoIds = dataSources.videoOrNull()?.map { it.mediaId() }
+        val newSourceIds = dataSourcesNew.map { it.mediaId() }.distinct()
+        val toAdd = newSourceIds - currentVideoIds
+        val toRemove = currentVideoIds?.minus(newSourceIds)
+        toAdd.forEach { id ->
+            val source = dataSourcesNew.first { it.mediaId() == id }
+            dataSources.addVideoDataSource(
+                source
+            )
+            tracks.updateTracksInfo()
+            if (tracks.active.has(TrackType.VIDEO)) {
+                source.selectTrack(TrackType.VIDEO)
+            }
+        }
+        toRemove?.forEach { id ->
+            dataSources.removeVideoDataSource(id)
+            segments.releaseSegment(id)
+        }
+    }
+
     override suspend fun queueThumbnails(list: List<ThumbnailRequest>) {
 
         val map = list.groupBy { it.sourceId() }
