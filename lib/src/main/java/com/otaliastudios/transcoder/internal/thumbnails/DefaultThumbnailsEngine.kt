@@ -247,17 +247,10 @@ class DefaultThumbnailsEngine(
         val toRemove = currentVideoIds?.minus(newSourceIds)
         toAdd.forEach { id ->
             val source = dataSourcesNew.first { it.mediaId() == id }
-            dataSources.addVideoDataSource(
-                source
-            )
-            tracks.updateTracksInfo()
-            if (tracks.active.has(TrackType.VIDEO)) {
-                source.selectTrack(TrackType.VIDEO)
-            }
+            addDataSource(source)
         }
         toRemove?.forEach { id ->
-            dataSources.removeVideoDataSource(id)
-            segments.releaseSegment(id)
+            removeDataSource(id)
         }
     }
 
