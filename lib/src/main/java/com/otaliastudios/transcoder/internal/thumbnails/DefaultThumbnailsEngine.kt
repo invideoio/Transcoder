@@ -259,11 +259,13 @@ class DefaultThumbnailsEngine(
         val map = list.groupBy { it.sourceId() }
 
         map.forEach { entry ->
+            val index = dataSources[TrackType.VIDEO].indexOfFirst { it.mediaId() == entry.key }
             val positions = entry.value.flatMap { request ->
-                val duration = timer.totalDurationUs
+//                val duration = timer.totalDurationUs
+                val duration = dataSources[TrackType.VIDEO][index].durationUs
                 request.locate(duration).map { it to request }
             }.sortedBy { it.first }
-            val index = dataSources[TrackType.VIDEO].indexOfFirst { it.mediaId() == entry.key }
+
             if (index >= 0) {
                 stubs.addAll(
                     positions.map { (positionUs, request) ->
@@ -318,7 +320,10 @@ class DefaultThumbnailsEngine(
         if (stubs.firstOrNull()?.request?.sourceId() == source && positionUs == stubs.firstOrNull()?.positionUs) {
             return
         }
-        val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(timer.durationUs.video)[0]
+        val index = dataSources[TrackType.VIDEO].indexOfFirst { it.mediaId() == source }
+        val duration = dataSources[TrackType.VIDEO][index].durationUs
+
+        val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(duration)[0]
         val stub = stubs.find {it.request.sourceId() == source &&  it.positionUs == locatedTimestampUs }
         if (stub != null) {
             log.i("removePosition Match: $positionUs :$stubs")
