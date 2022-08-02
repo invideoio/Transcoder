@@ -126,8 +126,8 @@ class Decoder(
     }
 
     override fun buffer(): Pair<ByteBuffer, Int>? {
-        if (shouldFlush?.invoke() == true)
-            codec.flush()
+//        if (shouldFlush?.invoke() == true)
+//            codec.flush()
         val id = codec.dequeueInputBuffer(0)
         return if (id >= 0) {
             dequeuedInputs++
