@@ -260,7 +260,7 @@ class DefaultThumbnailsEngine(
 
         map.forEach { entry ->
             val dataSource = getDataSourceForId(entry.key)
-            if (dataSource !=null) {
+            if (dataSource != null) {
                 val duration = dataSource.durationUs
                 val positions = entry.value.flatMap { request ->
                     request.locate(duration).map { it to request }
