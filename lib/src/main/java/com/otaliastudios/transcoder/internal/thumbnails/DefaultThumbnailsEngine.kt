@@ -259,21 +259,22 @@ class DefaultThumbnailsEngine(
         val map = list.groupBy { it.sourceId() }
 
         map.forEach { entry ->
-            val (index, duration) = getSourceIndexAndDurationUs(entry.key)
-            val positions = entry.value.flatMap { request ->
-                request.locate(duration).map { it to request }
-            }.sortedBy { it.first }
-
-            if (index >= 0) {
+            val dataSource = getDataSourceForId(entry.key)
+            if (dataSource !=null) {
+                val duration = dataSource.durationUs
+                val positions = entry.value.flatMap { request ->
+                    request.locate(duration).map { it to request }
+                }.sortedBy { it.first }
                 stubs.addAll(
                     positions.map { (positionUs, request) ->
                         Stub(request, positionUs, positionUs)
-                    }.toMutableList().reorder(dataSources[TrackType.VIDEO][index])
+                    }.toMutableList().reorder(dataSource)
                 )
+                if (VERBOSE) {
+                    log.i("Updating pipeline positions for segment source#$dataSource absoluteUs=${positions.joinToString { it.first.toString() }}, and stubs $stubs")
+                }
             }
-            if (VERBOSE) {
-                log.i("Updating pipeline positions for segment Index#$index absoluteUs=${positions.joinToString { it.first.toString() }}, and stubs $stubs")
-            }
+
         }
 
         if (stubs.isNotEmpty()) {
@@ -319,23 +320,23 @@ class DefaultThumbnailsEngine(
             return
         }
 
-        val (_, duration) = getSourceIndexAndDurationUs(source)
-        val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(duration)[0]
-        val stub = stubs.find {it.request.sourceId() == source &&  it.positionUs == locatedTimestampUs }
-        if (stub != null) {
-            log.i("removePosition Match: $positionUs :$stubs")
-            stubs.remove(stub)
-            shouldSeek = true
+        val dataSource = getDataSourceForId(source)
+        if (dataSource != null) {
+            val duration = dataSource.durationUs
+            val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(duration)[0]
+            val stub =
+                stubs.find { it.request.sourceId() == source && it.positionUs == locatedTimestampUs }
+            if (stub != null) {
+                log.i("removePosition Match: $positionUs :$stubs")
+                stubs.remove(stub)
+                shouldSeek = true
+            }
         }
     }
 
-    override fun getSourceIndexAndDurationUs(source: String): Pair<Int,Long> {
-        val index = dataSources[TrackType.VIDEO].indexOfFirst { it.mediaId() == source }
-        return if (index == -1) {
-            Pair(-1,-1)
-        } else {
-            Pair(index, dataSources[TrackType.VIDEO][index].durationUs)
-        }
+
+    override fun getDataSourceForId(source: String): DataSource? {
+        return dataSources[TrackType.VIDEO].firstOrNull { it.mediaId() == source }
     }
 
     private fun  List<Stub>.reorder(source: DataSource): Collection<Stub> {
