@@ -24,6 +24,8 @@ abstract class ThumbnailsEngine {
 
     abstract suspend fun removePosition(source: String, positionUs: Long)
 
+    abstract fun getSourceIndexAndDurationUs(source: String): Pair<Int, Long>
+
     abstract fun cleanup()
 
     companion object {
