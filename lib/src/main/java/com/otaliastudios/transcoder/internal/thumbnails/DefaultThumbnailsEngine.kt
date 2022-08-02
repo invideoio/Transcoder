@@ -114,6 +114,8 @@ class DefaultThumbnailsEngine(
         if(VERBOSE) {
             log.i("Creating pipeline #$index. absoluteUs=${stubs.joinToString { it.toString() }}")
         }
+        shouldSeek = true
+        shouldFlush = false
         return Pipeline.build("Thumbnails") {
             Seeker(source) {
                 var seek = false

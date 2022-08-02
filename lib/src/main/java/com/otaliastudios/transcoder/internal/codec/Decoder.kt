@@ -49,6 +49,8 @@ class Decoder(
 
     private val codec = createDecoderByType(format, useSwFor4K && format.is4K())
 
+    private var decoderReady = false
+
     @Suppress("MagicNumber")
     private fun MediaFormat.is4K(): Boolean {
         val width = format.getInteger(MediaFormat.KEY_WIDTH)
@@ -123,12 +125,15 @@ class Decoder(
         val surface = next.handleSourceFormat(format)
         codec.configure(format, surface, null, 0)
         codec.start()
+        decoderReady = false
     }
 
     override fun buffer(): Pair<ByteBuffer, Int>? {
-//        if (shouldFlush?.invoke() == true)
-//            codec.flush()
-        val id = codec.dequeueInputBuffer(0)
+        if (shouldFlush?.invoke() == true && decoderReady) {
+            log.i("codec flush")
+            codec.flush()
+        }
+        val id = codec.dequeueInputBuffer(timeoutUs)
         return if (id >= 0) {
             dequeuedInputs++
             buffers.getInputBuffer(id) to id
@@ -168,6 +173,7 @@ class Decoder(
                     "drain(): got INFO_OUTPUT_FORMAT_CHANGED," +
                         " handling format and retrying. format=${codec.outputFormat}"
                 )
+                decoderReady = true
                 next.handleRawFormat(codec.outputFormat)
                 State.Retry
             }
