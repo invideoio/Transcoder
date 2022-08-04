@@ -77,7 +77,7 @@ class DefaultThumbnailsEngine(
     ) {
         var actualLocalizedUs: Long = localizedUs
         override fun toString(): String {
-            return request.sourceId() + ":" + positionUs.toString()
+            return request.sourcePath() + ":" + positionUs.toString()
         }
     }
 
@@ -258,7 +258,7 @@ class DefaultThumbnailsEngine(
 
     override suspend fun queueThumbnails(list: List<ThumbnailRequest>) {
 
-        val map = list.groupBy { it.sourceId() }
+        val map = list.groupBy { it.sourcePath() }
 
         map.forEach { entry ->
             val dataSource = getDataSourceForId(entry.key)
@@ -282,7 +282,7 @@ class DefaultThumbnailsEngine(
         if (stubs.isNotEmpty()) {
             while (currentCoroutineContext().isActive) {
                 val segment =
-                    stubs.firstOrNull()?.request?.sourceId()?.let { segments.getSegment(it) }
+                    stubs.firstOrNull()?.request?.sourcePath()?.let { segments.getSegment(it) }
                 if (VERBOSE) {
                     log.i("loop advancing for $segment")
                 }
@@ -311,23 +311,23 @@ class DefaultThumbnailsEngine(
         segments.release()
     }
 
-    override suspend fun removePosition(source: String, positionUs: Long) {
+    override suspend fun removePosition(sourceId: String, positionUs: Long) {
         if (positionUs < 0) {
             stubs.removeAll{
-                it.request.sourceId() == source
+                it.request.sourceId() == sourceId
             }
             return
         }
-        if (stubs.firstOrNull()?.request?.sourceId() == source && positionUs == stubs.firstOrNull()?.positionUs) {
+        if (stubs.firstOrNull()?.request?.sourceId() == sourceId && positionUs == stubs.firstOrNull()?.positionUs) {
             return
         }
 
-        val dataSource = getDataSourceForId(source)
+        val dataSource = getDataSourceForId(sourceId)
         if (dataSource != null) {
             val duration = dataSource.durationUs
             val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(duration)[0]
             val stub =
-                stubs.find { it.request.sourceId() == source && it.positionUs == locatedTimestampUs }
+                stubs.find { it.request.sourceId() == sourceId && it.positionUs == locatedTimestampUs }
             if (stub != null) {
                 log.i("removePosition Match: $positionUs :$stubs")
                 stubs.remove(stub)
