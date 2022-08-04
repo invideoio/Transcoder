@@ -22,9 +22,9 @@ abstract class ThumbnailsEngine {
 
     abstract suspend fun queueThumbnails(list: List<ThumbnailRequest>)
 
-    abstract suspend fun removePosition(sourceId: String, positionUs: Long)
+    abstract suspend fun removePosition(sourcePath: String, sourceId: String, positionUs: Long)
 
-    abstract fun getDataSourceForId(source: String): DataSource?
+    abstract fun getDataSourceByPath(source: String): DataSource?
 
     abstract fun cleanup()
 

@@ -261,7 +261,7 @@ class DefaultThumbnailsEngine(
         val map = list.groupBy { it.sourcePath() }
 
         map.forEach { entry ->
-            val dataSource = getDataSourceForId(entry.key)
+            val dataSource = getDataSourceByPath(entry.key)
             if (dataSource != null) {
                 val duration = dataSource.durationUs
                 val positions = entry.value.flatMap { request ->
@@ -311,7 +311,7 @@ class DefaultThumbnailsEngine(
         segments.release()
     }
 
-    override suspend fun removePosition(sourceId: String, positionUs: Long) {
+    override suspend fun removePosition(sourcePath: String, sourceId: String, positionUs: Long) {
         if (positionUs < 0) {
             stubs.removeAll{
                 it.request.sourceId() == sourceId
@@ -322,7 +322,7 @@ class DefaultThumbnailsEngine(
             return
         }
 
-        val dataSource = getDataSourceForId(sourceId)
+        val dataSource = getDataSourceByPath(sourcePath)
         if (dataSource != null) {
             val duration = dataSource.durationUs
             val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(duration)[0]
@@ -337,7 +337,7 @@ class DefaultThumbnailsEngine(
     }
 
 
-    override fun getDataSourceForId(source: String): DataSource? {
+    override fun getDataSourceByPath(source: String): DataSource? {
         return dataSources[TrackType.VIDEO].firstOrNull { it.mediaId() == source }
     }
 
