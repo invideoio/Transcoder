@@ -121,7 +121,7 @@ class Decoder(
 
     override fun initialize(next: DecoderChannel) {
         super.initialize(next)
-        log.i("initialize() ${codec.name}")
+        log.i("initialize(): ${codec.name}, for format $format ")
         val surface = next.handleSourceFormat(format)
         try {
             codec.configure(format, surface, null, 0)
