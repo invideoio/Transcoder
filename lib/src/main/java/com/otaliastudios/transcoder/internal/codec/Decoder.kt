@@ -7,6 +7,7 @@ import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
 import android.view.Surface
+import com.otaliastudios.transcoder.BuildConfig
 import com.otaliastudios.transcoder.common.trackType
 import com.otaliastudios.transcoder.internal.data.ReaderChannel
 import com.otaliastudios.transcoder.internal.data.ReaderData
@@ -80,31 +81,30 @@ class Decoder(
 
     private fun createDecoderByType(format: MediaFormat, useSoftware: Boolean = false): MediaCodec {
         val mime = format.getString(MediaFormat.KEY_MIME)!!
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val allCodecs = MediaCodecList(MediaCodecList.ALL_CODECS)
 
-            var codecName: String? = null
-            for (info in allCodecs.codecInfos) {
-                if (info.isEncoder || (info.isHardwareAcceleratedCompat() && useSoftware)) {
-                    // log.e("Rejecting codec: ${info.name}")
-                    continue
-                }
-                try {
-                    val caps = info.getCapabilitiesForType(mime)
-                    if (caps != null && caps.isFormatSupported(format)) {
-                        codecName = info.name
-                        break
-                    } else {
-                        // log.e("Rejecting decoder: ${info.name}")
-                    }
-                } catch (e: IllegalArgumentException) {
-                    log.e("Unsupported codec type: $mime")
-                }
+        val allCodecs = MediaCodecList(MediaCodecList.ALL_CODECS)
+
+        var codecName: String? = null
+        for (info in allCodecs.codecInfos) {
+            if (info.isEncoder || (info.isHardwareAcceleratedCompat() && useSoftware)) {
+                // log.e("Rejecting codec: ${info.name}")
+                continue
             }
-            log.i("Using codec: $codecName for format: $format")
-            if (codecName != null) {
-                return createByCodecName(codecName)
+            try {
+                val caps = info.getCapabilitiesForType(mime)
+                if (caps != null && caps.isFormatSupported(format)) {
+                    codecName = info.name
+                    break
+                } else {
+                    // log.e("Rejecting decoder: ${info.name}")
+                }
+            } catch (e: IllegalArgumentException) {
+                log.e("Unsupported codec type: $mime")
             }
+        }
+        log.i("Using codec: $codecName for format: $format")
+        if (codecName != null) {
+            return createByCodecName(codecName)
         }
         return createDecoderByType(mime)
     }
@@ -121,11 +121,65 @@ class Decoder(
 
     override fun initialize(next: DecoderChannel) {
         super.initialize(next)
-        log.i("initialize()")
+        val videoCapabilities = codec.codecInfo.getCapabilitiesForType(
+            format.getString(
+                MediaFormat.KEY_MIME
+            )!!
+        ).videoCapabilities
+        log.i(
+            "initialize(): ${codec.name}, for format $format, " +
+                    "supportedHeightRange ${videoCapabilities.supportedHeights} " +
+                    "supportedWidthRange ${videoCapabilities.supportedWidths}"
+        )
         val surface = next.handleSourceFormat(format)
-        codec.configure(format, surface, null, 0)
-        codec.start()
+        try {
+            codec.configure(format, surface, null, 0)
+        }
+        catch (e: Exception) {
+            if(BuildConfig.DEBUG) {
+                log.e("Failed while configuring codec ${codec.name} for format $format")
+                logCodecException(e)
+            }
+            throw e
+        }
+        try {
+            codec.start()
+        }
+        catch (e: Exception) {
+            if(BuildConfig.DEBUG) {
+                log.e("Failed while starting codec ${codec.name} for format $format")
+                logCodecException(e)
+            }
+            throw e
+        }
         decoderReady = false
+    }
+
+    private fun logCodecException(e: Exception) {
+        when(e) {
+            is CodecException -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    log.e("CodecException: " +
+                            "diagnosticInfo: ${e.diagnosticInfo}, " +
+                            "isRecoverable: ${e.isRecoverable}, " +
+                            "isTransient: ${e.isTransient}, " +
+                            "errorCode:${e.errorCode}")
+                }
+                else {
+                    log.e("CodecException: " +
+                            "diagnosticInfo: ${e.diagnosticInfo}, " +
+                            "isRecoverable: ${e.isRecoverable}, " +
+                            "isTransient: ${e.isTransient}")
+
+                }
+            }
+            is java.lang.IllegalArgumentException -> {
+                log.e("IllegalArgumentException: ${e.message}")
+            }
+            is java.lang.IllegalStateException -> {
+                log.e("IllegalStateException: ${e.message}")
+            }
+        }
     }
 
     override fun buffer(): Pair<ByteBuffer, Int>? {
