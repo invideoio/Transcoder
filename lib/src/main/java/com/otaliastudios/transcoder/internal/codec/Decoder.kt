@@ -7,6 +7,7 @@ import android.media.MediaCodecList
 import android.media.MediaFormat
 import android.os.Build
 import android.view.Surface
+import com.otaliastudios.transcoder.BuildConfig
 import com.otaliastudios.transcoder.common.trackType
 import com.otaliastudios.transcoder.internal.data.ReaderChannel
 import com.otaliastudios.transcoder.internal.data.ReaderData
@@ -126,16 +127,20 @@ class Decoder(
             codec.configure(format, surface, null, 0)
         }
         catch (e: Exception) {
-            log.e("Failed while configuring codec ${codec.name} for format $format")
-            logCodecException(e)
+            if(BuildConfig.DEBUG) {
+                log.e("Failed while configuring codec ${codec.name} for format $format")
+                logCodecException(e)
+            }
             throw e
         }
         try {
             codec.start()
         }
         catch (e: Exception) {
-            log.e("Failed while starting codec ${codec.name} for format $format")
-            logCodecException(e)
+            if(BuildConfig.DEBUG) {
+                log.e("Failed while starting codec ${codec.name} for format $format")
+                logCodecException(e)
+            }
             throw e
         }
         decoderReady = false
