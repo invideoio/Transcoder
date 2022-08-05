@@ -121,7 +121,16 @@ class Decoder(
 
     override fun initialize(next: DecoderChannel) {
         super.initialize(next)
-        log.i("initialize(): ${codec.name}, for format $format ")
+        val videoCapabilities = codec.codecInfo.getCapabilitiesForType(
+            format.getString(
+                MediaFormat.KEY_MIME
+            )!!
+        ).videoCapabilities
+        log.i(
+            "initialize(): ${codec.name}, for format $format, " +
+                    "supportedHeightRange ${videoCapabilities.supportedHeights} " +
+                    "supportedWidthRange ${videoCapabilities.supportedWidths}"
+        )
         val surface = next.handleSourceFormat(format)
         try {
             codec.configure(format, surface, null, 0)
