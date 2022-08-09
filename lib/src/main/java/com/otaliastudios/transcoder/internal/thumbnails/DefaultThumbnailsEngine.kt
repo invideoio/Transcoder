@@ -311,15 +311,20 @@ class DefaultThumbnailsEngine(
         segments.release()
     }
 
-    override suspend fun removePosition(sourcePath: String, sourceId: String, positionUs: Long) {
+    override fun removePosition(sourcePath: String, sourceId: String, positionUs: Long) {
         if (positionUs < 0) {
-            stubs.removeAll{
+            val activeStub = stubs.firstOrNull()?.takeIf { it.request.sourceId() == sourceId }
+            stubs.removeAll {
                 it.request.sourceId() == sourceId
+            }
+            if (activeStub != null) {
+                stubs.addFirst(activeStub)
             }
             shouldSeek = true
             return
         }
-        if (stubs.firstOrNull()?.request?.sourceId() == sourceId && positionUs == stubs.firstOrNull()?.positionUs) {
+        val isStubActive = stubs.firstOrNull()?.request?.sourceId() == sourceId && positionUs == stubs.firstOrNull()?.positionUs
+        if (isStubActive) {
             return
         }
 
