@@ -35,7 +35,7 @@ interface DecoderChannel : Channel {
 class Decoder(
     private val format: MediaFormat, // source.getTrackFormat(track)
     continuous: Boolean, // relevant if the source sends no-render chunks. should we compensate or not?
-    useSwFor4K: Boolean = false,
+    private val useSwFor4K: Boolean = false,
     val shouldFlush: (() -> Boolean)? = null
 ) : QueuedStep<ReaderData, ReaderChannel, DecoderData, DecoderChannel>(), ReaderChannel {
 
@@ -45,10 +45,12 @@ class Decoder(
         private const val VERBOSE = false
     }
 
+    private var retry: Boolean = true
+
     private val log = Logger("Decoder(${format.trackType},${ID[format.trackType].getAndIncrement()})")
     override val channel = this
 
-    private val codec = createDecoderByType(format, useSwFor4K && format.is4K())
+    private var codec = createDecoderByType(format, useSwFor4K && format.is4K())
 
     private var decoderReady = false
 
@@ -103,8 +105,14 @@ class Decoder(
             }
         }
         log.i("Using codec: $codecName for format: $format")
-        if (codecName != null) {
-            return createByCodecName(codecName)
+        try {
+            if (codecName != null) {
+                return createByCodecName(codecName)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            log.e("Exception while creating codec by name: $codecName :: ${e.message}")
+            return createDecoderByType(mime)
         }
         return createDecoderByType(mime)
     }
@@ -142,7 +150,13 @@ class Decoder(
                 log.e("Failed while configuring codec ${codec.name} for format $format")
                 logCodecException(e)
             }
-            throw e
+            if (retry) {
+                retry = false
+                val mime = format.getString(MediaFormat.KEY_MIME)!!
+                codec = createDecoderByType(mime)
+                initialize(next)
+                return
+            }
         }
         try {
             codec.start()
