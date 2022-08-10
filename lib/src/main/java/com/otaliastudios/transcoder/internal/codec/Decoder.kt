@@ -136,7 +136,7 @@ class Decoder(
         ).videoCapabilities
         if (videoCapabilities != null) {
             log.i(
-                "initialize(): ${codec.name}, for format $format, " +
+                "initialize(): ${codec.codecInfo.name}, for format $format, " +
                         "supportedHeightRange ${videoCapabilities.supportedHeights} " +
                         "supportedWidthRange ${videoCapabilities.supportedWidths}"
             )
