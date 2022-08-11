@@ -102,6 +102,8 @@ class CustomSegments(
                 segmentMap.remove(it)
             }
             if(releaseAll) {
+                currentSegment = null
+                currentSegmentMapKey = null
                 segmentMap.clear()
             }
         }

@@ -28,6 +28,9 @@ abstract class ThumbnailsEngine {
 
     abstract fun cleanup()
 
+    @Volatile
+    var hasMoreRequestsIncoming = true
+
     companion object {
         private val log = Logger("ThumbnailsEngine")
 
