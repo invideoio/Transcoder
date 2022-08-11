@@ -297,7 +297,10 @@ class DefaultThumbnailsEngine(
                 // avoid calling hasNext if we advanced.
                 val completed = !advanced && !segments.hasNext()
                 if (completed || stubs.isEmpty()) {
-                    log.i("loop broken $stubs")
+                    log.i("loop broken $stubs $hasMoreRequestsIncoming")
+                    if (!hasMoreRequestsIncoming) {
+                        segments.release()
+                    }
                     break
                 } else if (!advanced) {
                     delay(WAIT_MS)
