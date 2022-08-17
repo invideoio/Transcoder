@@ -111,7 +111,11 @@ public abstract class DefaultDataSource implements DataSource {
 
         if (sampleTime == -1 || (keyFrameTimestamps.size() > 0 && sampleTime == keyFrameTimestamps.get(keyFrameTimestamps.size() - 1))) {
             lastKeyFrame = true;
-            mExtractor.seekTo(keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) + SEEK_THRESHOLD, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+            if (!keyFrameTimestamps.isEmpty()) {
+                mExtractor.seekTo(keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) + SEEK_THRESHOLD, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+            } else {
+                mExtractor.seekTo(0L, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+            }
             return -1;
         }
 //        LOG.i("keyFrameStartTime:" + sampleTime);
