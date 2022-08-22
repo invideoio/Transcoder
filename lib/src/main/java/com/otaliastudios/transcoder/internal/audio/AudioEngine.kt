@@ -18,8 +18,6 @@ import com.otaliastudios.transcoder.internal.utils.Logger
 import com.otaliastudios.transcoder.resample.AudioResampler
 import com.otaliastudios.transcoder.stretch.AudioStretcher
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.math.ceil
-import kotlin.math.floor
 
 /**
  * Performs audio rendering, from decoder output to encoder input, applying sample rate conversion,
@@ -28,7 +26,8 @@ import kotlin.math.floor
 class AudioEngine(
     private val stretcher: AudioStretcher,
     private val resampler: AudioResampler,
-    private val targetFormat: MediaFormat
+    private val targetFormat: MediaFormat,
+    private val stretch : Float = 1.0f
 ) : QueuedStep<DecoderData, DecoderChannel, EncoderData, EncoderChannel>(), DecoderChannel {
 
     companion object {
@@ -45,7 +44,7 @@ class AudioEngine(
     private lateinit var rawFormat: MediaFormat
     private lateinit var chunks: ChunkQueue
     private lateinit var remixer: AudioRemixer
-
+    private lateinit var sonicExo: SonicAudioProcessor
     override fun handleSourceFormat(sourceFormat: MediaFormat): Surface? = null
 
     override fun handleRawFormat(rawFormat: MediaFormat) {
@@ -53,14 +52,16 @@ class AudioEngine(
         this.rawFormat = rawFormat
         remixer = AudioRemixer[rawFormat.channels, targetFormat.channels]
         chunks = ChunkQueue(rawFormat.sampleRate, rawFormat.channels)
-        resampler.createStream(rawFormat.sampleRate, targetFormat.sampleRate, targetFormat.channels)
+//        resampler.createStream(rawFormat.sampleRate, targetFormat.sampleRate, targetFormat.channels)
+        sonicExo = SonicAudioProcessor(rawFormat.sampleRate, rawFormat.channels, stretch,1f, targetFormat.sampleRate)
     }
 
     override fun enqueueEos(data: DecoderData) {
         log.i("enqueueEos()")
         data.release(false)
         chunks.enqueueEos()
-        resampler.destroyStream()
+        sonicExo.queueEndOfStream()
+//        resampler.destroyStream()
     }
 
     override fun enqueue(data: DecoderData) {
@@ -84,6 +85,7 @@ class AudioEngine(
         return chunks.drain(
             eos = State.Eos(EncoderData(outBytes, outId, 0))
         ) { inBuffer, timeUs, stretch ->
+/*
             val outSize = outBuffer.remaining()
             val inSize = inBuffer.remaining()
 
@@ -119,6 +121,16 @@ class AudioEngine(
                 targetFormat.sampleRate,
                 targetFormat.channels
             )
+*/
+            sonicExo.queueInput(inBuffer)
+
+            val stretchBuffer = buffers.acquire("stretch", outBuffer.capacity())
+
+            sonicExo.getOutput(stretchBuffer)
+            stretchBuffer.flip()
+
+            // Remix
+            remixer.remix(stretchBuffer, outBuffer)
             outBuffer.flip()
 
             // Adjust position and dispatch.
