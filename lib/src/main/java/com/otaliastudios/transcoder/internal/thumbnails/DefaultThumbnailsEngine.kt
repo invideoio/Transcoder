@@ -3,11 +3,9 @@
 package com.otaliastudios.transcoder.internal.thumbnails
 
 import android.media.MediaFormat
-import com.otaliastudios.transcoder.common.TrackStatus
 import com.otaliastudios.transcoder.common.TrackType
 import com.otaliastudios.transcoder.internal.CustomSegments
 import com.otaliastudios.transcoder.internal.DataSources
-import com.otaliastudios.transcoder.internal.Timer
 import com.otaliastudios.transcoder.internal.Tracks
 import com.otaliastudios.transcoder.internal.codec.Decoder
 import com.otaliastudios.transcoder.internal.data.Reader
@@ -25,7 +23,6 @@ import com.otaliastudios.transcoder.strategy.RemoveTrackStrategy
 import com.otaliastudios.transcoder.thumbnail.SingleThumbnailRequest
 import com.otaliastudios.transcoder.thumbnail.Thumbnail
 import com.otaliastudios.transcoder.thumbnail.ThumbnailRequest
-import com.otaliastudios.transcoder.time.DefaultTimeInterpolator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
@@ -63,8 +60,6 @@ class DefaultThumbnailsEngine(
     )
 
     private val segments = CustomSegments(dataSources, tracks, ::createPipeline)
-
-    private val timer = Timer(DefaultTimeInterpolator(), dataSources, tracks, segments.currentIndex)
 
     init {
         log.i("Created Tracks, Segments, Timer...")
@@ -106,13 +101,11 @@ class DefaultThumbnailsEngine(
 
     private fun createPipeline(
         type: TrackType,
-        index: Int,
-        status: TrackStatus,
+        source: DataSource,
         outputFormat: MediaFormat
     ): Pipeline {
-        val source = dataSources[type][index].ignoringEOS()
         if(VERBOSE) {
-            log.i("Creating pipeline #$index. absoluteUs=${stubs.joinToString { it.toString() }}")
+            log.i("Creating pipeline for $source. absoluteUs=${stubs.joinToString { it.toString() }}")
         }
         shouldSeek = true
         shouldFlush = false

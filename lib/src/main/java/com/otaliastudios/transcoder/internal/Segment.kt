@@ -9,9 +9,10 @@ class Segment(
     val type: TrackType,
     val index: Int,
     private val pipeline: Pipeline,
+    val source: String = "",
 ) {
 
-    private val log = Logger("Segment($type,$index)")
+    private val log = Logger("Segment($type,$index,$source)")
     private var state: State<Unit>? = null
 
     fun advance(): Boolean {
