@@ -224,7 +224,7 @@ class DefaultThumbnailsEngine(
         }
         dataSources.addVideoDataSource(dataSource)
         tracks.updateTracksInfo()
-        if (tracks.active.has(TrackType.VIDEO) && dataSource.getTrackFormat(TrackType.VIDEO) != null) {
+        if (tracks.active.has(TrackType.VIDEO)) {
             dataSource.selectTrack(TrackType.VIDEO)
         }
     }

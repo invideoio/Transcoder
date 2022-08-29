@@ -55,8 +55,8 @@ public class TrimDataSource extends DataSourceWrapper {
                     "start=" + trimStartUs + ", " +
                     "end=" + trimEndUs + ", " +
                     "duration=" + duration);
-//            throw new IllegalArgumentException(
-//                    "Trim values cannot be greater than media duration.");
+            throw new IllegalArgumentException(
+                    "Trim values cannot be greater than media duration.");
         }
         LOG.i("initialize(): duration=" + duration
                 + " trimStart=" + trimStartUs
