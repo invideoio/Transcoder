@@ -316,17 +316,18 @@ class DefaultThumbnailsEngine(
 
     override fun removePosition(sourcePath: String, sourceId: String, positionUs: Long) {
         if (positionUs < 0) {
-            val activeStub = stubs.firstOrNull()?.takeIf { it.request.sourceId() == sourceId }
+//            val activeStub = stubs.firstOrNull()?.takeIf { it.request.sourceId() == sourceId }
             stubs.removeAll {
                 it.request.sourceId() == sourceId
             }
-            if (activeStub != null) {
-                stubs.addFirst(activeStub)
-            }
+//            if (activeStub != null) {
+//                stubs.addFirst(activeStub)
+//            }
             shouldSeek = true
             return
         }
-        val isStubActive = stubs.firstOrNull()?.request?.sourceId() == sourceId && positionUs == stubs.firstOrNull()?.positionUs
+        val isStubActive =
+            stubs.firstOrNull()?.request?.sourceId() == sourceId && positionUs == stubs.firstOrNull()?.positionUs && positionUs > 0
         if (isStubActive) {
             return
         }
