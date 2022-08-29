@@ -13,13 +13,12 @@ import com.otaliastudios.transcoder.source.DataSource
 class CustomSegments(
     private val sources: DataSources,
     private val tracks: Tracks,
-    private val factory: (TrackType, Int, TrackStatus, MediaFormat) -> Pipeline,
+    private val factory: (TrackType, DataSource, MediaFormat) -> Pipeline,
 ) {
 
     private val log = Logger("Segments")
     private var currentSegment: Segment? = null
     private var currentSegmentMapKey: String? = null
-    val currentIndex = mutableTrackMapOf(-1, -1)
     private val segmentMap = mutableMapOf<String, Segment?>()
 
     fun hasNext(type: TrackType): Boolean {
@@ -29,8 +28,7 @@ class CustomSegments(
                     " canAdvance=${currentSegment?.canAdvance()}"
         )
         val segment = currentSegment ?: return true // not started
-        val lastIndex = sources.getOrNull(type)?.lastIndex ?: return false // no track!
-        return segment.canAdvance() || segment.index < lastIndex
+        return segment.canAdvance()
     }
 
     fun hasNext() = hasNext(TrackType.VIDEO)
@@ -56,9 +54,9 @@ class CustomSegments(
         val segment = segmentMap[id]
         segment?.let {
             it.release()
-            val source = sources[it.type][it.index]
+            val source = sources[it.type].firstOrNull { it.mediaId() == id }
             if (tracks.active.has(it.type)) {
-                source.releaseTrack(it.type)
+                source?.releaseTrack(it.type)
             }
             segmentMap.remove(id)
             if(currentSegment == segment) {
@@ -70,42 +68,42 @@ class CustomSegments(
     fun release() = destroySegment(true)
 
     private fun tryCreateSegment(id: String): Segment? {
-        val index = sources[TrackType.VIDEO].indexOfFirst { it.mediaId() == id }
         // Return null if out of bounds, either because segments are over or because the
         // source set does not have sources for this track type.
-        val source = sources[TrackType.VIDEO].getOrNull(index) ?: return null
+        val source = sources[TrackType.VIDEO].firstOrNull { it.mediaId() == id } ?: return null
         source.init()
-        log.i("tryCreateSegment(${TrackType.VIDEO}, $index): created!")
+        log.i("tryCreateSegment(${TrackType.VIDEO}, $id): created!")
         if (tracks.active.has(TrackType.VIDEO)) {
             source.selectTrack(TrackType.VIDEO)
         }
         // Update current index before pipeline creation, for other components
         // who check it during pipeline init.
-        currentIndex[TrackType.VIDEO] = index
         val pipeline = factory(
             TrackType.VIDEO,
-            index,
-            tracks.all[TrackType.VIDEO],
+            source,
             tracks.outputFormats[TrackType.VIDEO]
         )
-        return Segment(TrackType.VIDEO, index, pipeline)
+        return Segment(TrackType.VIDEO, -1, pipeline, id)
     }
 
     private fun destroySegment(releaseAll: Boolean = false) {
-        currentSegment?.let {
-            it.release()
-            val source = sources[it.type][it.index]
-            if (tracks.active.has(it.type)) {
-                source.releaseTrack(it.type)
+        currentSegment?.let { segment ->
+            segment.release()
+            val source = sources[segment.type].firstOrNull { it.mediaId() == segment.source }
+            if (tracks.active.has(segment.type)) {
+                source?.releaseTrack(segment.type)
             }
             currentSegmentMapKey?.let {
                 segmentMap.remove(it)
             }
-            if(releaseAll) {
-                currentSegment = null
-                currentSegmentMapKey = null
-                segmentMap.clear()
+            currentSegment = null
+            currentSegmentMapKey = null
+        }
+        if (releaseAll) {
+            segmentMap.forEach {
+                it.value?.release()
             }
+            segmentMap.clear()
         }
     }
     private fun DataSource.init() = if (!isInitialized) initialize() else Unit
