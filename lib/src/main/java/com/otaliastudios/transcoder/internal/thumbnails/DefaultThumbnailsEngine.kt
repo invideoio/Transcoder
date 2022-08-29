@@ -263,7 +263,7 @@ class DefaultThumbnailsEngine(
         map.forEach { entry ->
             val dataSource = getDataSourceByPath(entry.key)
             if (dataSource != null) {
-                val duration = dataSource.durationUs
+                val duration = dataSource.getVideoTrackDuration()
                 val positions = entry.value.flatMap { request ->
                     request.locate(duration).map { it to request }
                 }.sortedBy { it.first }
@@ -279,35 +279,38 @@ class DefaultThumbnailsEngine(
 
         }
 
-        if (stubs.isNotEmpty()) {
-            while (currentCoroutineContext().isActive) {
-                val segment =
-                    stubs.firstOrNull()?.request?.sourcePath()?.let { segments.getSegment(it) }
-                if (VERBOSE) {
-                    log.i("loop advancing for $segment")
+        while (currentCoroutineContext().isActive && stubs.isNotEmpty()) {
+            val segment =
+                stubs.firstOrNull()?.request?.sourcePath()?.let { segments.getSegment(it) }
+            if (VERBOSE) {
+                log.i("loop advancing for $segment")
+            }
+            val advanced = try {
+                segment?.advance() ?: false
+            } catch (e: Exception) {
+                if (e !is CancellationException) {
+                    currentCoroutineContext().ensureActive()
                 }
-                val advanced = try {
-                    segment?.advance() ?: false
-                } catch (e: Exception) {
-                    if (e !is CancellationException) {
-                        currentCoroutineContext().ensureActive()
-                    }
-                    throw e
+                throw e
+            }
+            // avoid calling hasNext if we advanced.
+            val completed = !advanced && !segments.hasNext()
+            if (completed || stubs.isEmpty()) {
+                log.i("loop broken $stubs $hasMoreRequestsIncoming")
+                if (!hasMoreRequestsIncoming) {
+                    segments.release()
                 }
-                // avoid calling hasNext if we advanced.
-                val completed = !advanced && !segments.hasNext()
-                if (completed || stubs.isEmpty()) {
-                    log.i("loop broken $stubs $hasMoreRequestsIncoming")
-                    if (!hasMoreRequestsIncoming) {
-                        segments.release()
-                    }
-                    break
-                } else if (!advanced) {
-                    delay(WAIT_MS)
-                }
+                break
+            } else if (!advanced) {
+                delay(WAIT_MS)
             }
         }
+
     }
+
+    private fun DataSource.getVideoTrackDuration() =
+        getTrackFormat(TrackType.VIDEO)?.getLong(MediaFormat.KEY_DURATION)
+            ?: durationUs
 
     fun finish() {
         this.finish = true
@@ -333,7 +336,7 @@ class DefaultThumbnailsEngine(
 
         val dataSource = getDataSourceByPath(sourcePath)
         if (dataSource != null) {
-            val duration = dataSource.durationUs
+            val duration = dataSource.getVideoTrackDuration()
             val locatedTimestampUs = SingleThumbnailRequest(positionUs).locate(duration)[0]
             val stub =
                 stubs.find { it.request.sourceId() == sourceId && it.positionUs == locatedTimestampUs }
