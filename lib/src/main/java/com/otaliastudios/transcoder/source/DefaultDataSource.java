@@ -56,7 +56,7 @@ public abstract class DefaultDataSource implements DataSource {
             initializeExtractor(mExtractor);
         } catch (IOException e) {
             LOG.e("Got IOException while trying to open MediaExtractor.", e);
-            throw new RuntimeException(e);
+//            throw new RuntimeException(e);
         }
         mMetadata = new MediaMetadataRetriever();
         initializeRetriever(mMetadata);
