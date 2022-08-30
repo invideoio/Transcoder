@@ -104,6 +104,7 @@ class DefaultThumbnailsEngine(
         source: DataSource,
         outputFormat: MediaFormat
     ): Pipeline {
+        val source = source.ignoringEOS()
         if(VERBOSE) {
             log.i("Creating pipeline for $source. absoluteUs=${stubs.joinToString { it.toString() }}")
         }
