@@ -18,7 +18,7 @@ abstract class ThumbnailsEngine {
 
     abstract fun removeDataSource(dataSourceId: String)
 
-    abstract fun updateDataSources(dataSources: List<DataSource>)
+    abstract suspend fun updateDataSources(dataSources: List<DataSource>)
 
     abstract suspend fun queueThumbnails(list: List<ThumbnailRequest>)
 

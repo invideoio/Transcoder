@@ -77,6 +77,7 @@ class DefaultThumbnailsEngine(
     }
 
     private val stubs = ArrayDeque<Stub>()
+    private val pendingRequests = ArrayDeque<ThumbnailRequest>()
 
     private inner class IgnoringEosDataSource(
         private val source: DataSource,
@@ -236,7 +237,7 @@ class DefaultThumbnailsEngine(
         tracks.updateTracksInfo()
     }
 
-    override fun updateDataSources(dataSourcesNew: List<DataSource>) {
+    override suspend fun updateDataSources(dataSourcesNew: List<DataSource>) {
         val currentVideoIds = dataSources.videoOrNull()?.map { it.mediaId() }
         val newSourceIds = dataSourcesNew.map { it.mediaId() }.distinct()
         val toAdd = newSourceIds - currentVideoIds
@@ -248,6 +249,7 @@ class DefaultThumbnailsEngine(
         toRemove?.forEach { id ->
             removeDataSource(id)
         }
+        queueThumbnails(pendingRequests)
     }
 
     override suspend fun queueThumbnails(list: List<ThumbnailRequest>) {
@@ -269,6 +271,9 @@ class DefaultThumbnailsEngine(
                 if (VERBOSE) {
                     log.i("Updating pipeline positions for segment source#$dataSource absoluteUs=${positions.joinToString { it.first.toString() }}, and stubs $stubs")
                 }
+                pendingRequests.removeAll { it.sourcePath() == dataSource.mediaId() }
+            } else {
+                pendingRequests.addAll(entry.value)
             }
 
         }
@@ -372,6 +377,7 @@ class DefaultThumbnailsEngine(
 
     override fun cleanup() {
         runCatching { stubs.clear() }
+        runCatching { pendingRequests.clear() }
         runCatching { segments.release() }
         runCatching { dataSources.release() }
     }
