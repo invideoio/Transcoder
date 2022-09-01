@@ -322,6 +322,9 @@ class DefaultThumbnailsEngine(
             stubs.removeAll {
                 it.request.sourceId() == sourceId
             }
+            pendingRequests.removeAll {
+                it.sourceId() == sourceId
+            }
 //            if (activeStub != null) {
 //                stubs.addFirst(activeStub)
 //            }
@@ -344,6 +347,16 @@ class DefaultThumbnailsEngine(
                 log.i("removePosition Match: $positionUs :$stubs")
                 stubs.remove(stub)
                 shouldSeek = true
+            }
+            val request = pendingRequests.find { it.sourceId() == sourceId && locatedTimestampUs == positionUs }
+            request?.let {
+                pendingRequests.remove(it)
+            }
+        }
+        else {
+            val request = pendingRequests.find { it.sourceId() == sourceId && it.locate(Long.MAX_VALUE)[0] == positionUs }
+            request?.let {
+                pendingRequests.remove(it)
             }
         }
     }
