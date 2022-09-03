@@ -1,5 +1,6 @@
 package com.otaliastudios.transcoder.source;
 
+import android.graphics.Bitmap;
 import android.media.MediaFormat;
 
 import androidx.annotation.NonNull;
@@ -112,6 +113,15 @@ public interface DataSource {
      */
     void releaseTrack(@NonNull TrackType type);
 
+
+    /**
+     * Returns closest key frame to the required position.
+     * @param positionUs position
+     */
+    default Bitmap getFrameAtPosition(long positionUs) {
+        return null;
+    };
+
     default long requestKeyFrameTimestamps() { return -1;}
 
     default ArrayList<Long> getKeyFrameTimestamps() {
@@ -121,6 +131,7 @@ public interface DataSource {
     default long getSeekThreshold() {
         return 0;
     }
+
     default String mediaId() { return "";}
     /**
      * Rewinds this source, moving it to its default state.

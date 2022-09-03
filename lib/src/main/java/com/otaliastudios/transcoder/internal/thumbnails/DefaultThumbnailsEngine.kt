@@ -274,19 +274,36 @@ class DefaultThumbnailsEngine(
         }
 
         while (currentCoroutineContext().isActive && stubs.isNotEmpty()) {
-            val segment =
-                stubs.firstOrNull()?.request?.sourcePath()?.let { segments.getSegment(it) }
-            if (VERBOSE) {
-                log.i("loop advancing for $segment")
-            }
-            val advanced = try {
-                segment?.advance() ?: false
-            } catch (e: Exception) {
-                if (e !is CancellationException) {
-                    currentCoroutineContext().ensureActive()
+            var advanced = false
+            val stub = stubs.firstOrNull()
+            try {
+                val segment = stub?.request?.sourcePath()?.let { segments.getSegment(it) }
+
+                if (VERBOSE) {
+                    log.i("loop advancing for $segment")
                 }
-                throw e
+                advanced = try {
+                    segment?.advance() ?: false
+                } catch (e: Exception) {
+                    if (e !is CancellationException) {
+                        currentCoroutineContext().ensureActive()
+                    }
+                    throw e
+                }
+            } catch (e: IllegalStateException) {
+                val path = stub?.request?.sourcePath()
+                if (path != null) {
+                    val dataSource = getDataSourceByPath(path)
+                    val bitmap = dataSource?.getFrameAtPosition(stub.positionUs)
+                    if (bitmap != null) {
+                        val thumbnail = Thumbnail(stub.request, stub.positionUs, bitmap)
+                        progress.trySend(thumbnail)
+                        stubs.removeFirst()
+                        advanced = true
+                    }
+                }
             }
+
             // avoid calling hasNext if we advanced.
             val completed = !advanced && !segments.hasNext()
             if (completed || stubs.isEmpty()) {

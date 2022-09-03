@@ -1,6 +1,7 @@
 package com.otaliastudios.transcoder.source;
 
 
+import android.graphics.Bitmap;
 import android.media.MediaFormat;
 
 import androidx.annotation.NonNull;
@@ -95,6 +96,11 @@ public class DataSourceWrapper implements DataSource {
         if (!mSource.isInitialized()) {
             mSource.initialize();
         }
+    }
+
+    @Override
+    public Bitmap getFrameAtPosition(long positionUs) {
+       return mSource.getFrameAtPosition(positionUs);
     }
 
     @Override
