@@ -118,7 +118,7 @@ public interface DataSource {
      * Returns closest key frame to the required position.
      * @param positionUs position
      */
-    default Bitmap getFrameAtPosition(long positionUs) {
+    default Bitmap getFrameAtPosition(long positionUs, int width, int height) {
         return null;
     };
 

@@ -99,8 +99,8 @@ public class DataSourceWrapper implements DataSource {
     }
 
     @Override
-    public Bitmap getFrameAtPosition(long positionUs) {
-       return mSource.getFrameAtPosition(positionUs);
+    public Bitmap getFrameAtPosition(long positionUs, int width, int height) {
+        return mSource.getFrameAtPosition(positionUs, width, height);
     }
 
     @Override

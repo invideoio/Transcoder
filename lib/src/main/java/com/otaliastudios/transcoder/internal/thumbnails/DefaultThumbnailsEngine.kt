@@ -294,7 +294,7 @@ class DefaultThumbnailsEngine(
                 val path = stub?.request?.sourcePath()
                 if (path != null) {
                     val dataSource = getDataSourceByPath(path)
-                    val bitmap = dataSource?.getFrameAtPosition(stub.positionUs)
+                    val bitmap = dataSource?.getFrameAtPosition(stub.positionUs, 150, 150)
                     if (bitmap != null) {
                         val thumbnail = Thumbnail(stub.request, stub.positionUs, bitmap)
                         progress.trySend(thumbnail)

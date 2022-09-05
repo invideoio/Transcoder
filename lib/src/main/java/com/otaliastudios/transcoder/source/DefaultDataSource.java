@@ -195,11 +195,19 @@ public abstract class DefaultDataSource implements DataSource {
     }
 
     @Override
-    public Bitmap getFrameAtPosition(long positionUs) {
+    public Bitmap getFrameAtPosition(long positionUs, int width, int height) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            return mMetadata.getScaledFrameAtTime(positionUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, 150, 150);
+            return mMetadata.getScaledFrameAtTime(positionUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, width, height);
         }
-        return mMetadata.getFrameAtTime(positionUs);
+        Bitmap bitmap = mMetadata.getFrameAtTime(positionUs);
+        Bitmap outBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
+        if (outBitmap == bitmap) {
+            outBitmap = bitmap.copy(bitmap.getConfig(), false);
+        }
+        bitmap = outBitmap;
+
+        return bitmap;
+
     }
     protected abstract void initializeExtractor(@NonNull MediaExtractor extractor) throws IOException;
 
