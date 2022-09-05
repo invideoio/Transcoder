@@ -200,13 +200,7 @@ public abstract class DefaultDataSource implements DataSource {
             return mMetadata.getScaledFrameAtTime(positionUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, width, height);
         }
         Bitmap bitmap = mMetadata.getFrameAtTime(positionUs);
-        Bitmap outBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true);
-        if (outBitmap == bitmap) {
-            outBitmap = bitmap.copy(bitmap.getConfig(), false);
-        }
-        bitmap = outBitmap;
-
-        return bitmap;
+        return Bitmap.createScaledBitmap(bitmap, width, height, true);
 
     }
     protected abstract void initializeExtractor(@NonNull MediaExtractor extractor) throws IOException;
