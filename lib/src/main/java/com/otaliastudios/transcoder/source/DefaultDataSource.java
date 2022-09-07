@@ -1,8 +1,10 @@
 package com.otaliastudios.transcoder.source;
 
+import android.graphics.Bitmap;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
+import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -192,6 +194,15 @@ public abstract class DefaultDataSource implements DataSource {
         }
     }
 
+    @Override
+    public Bitmap getFrameAtPosition(long positionUs, int width, int height) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            return mMetadata.getScaledFrameAtTime(positionUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC, width, height);
+        }
+        Bitmap bitmap = mMetadata.getFrameAtTime(positionUs);
+        return Bitmap.createScaledBitmap(bitmap, width, height, true);
+
+    }
     protected abstract void initializeExtractor(@NonNull MediaExtractor extractor) throws IOException;
 
     protected abstract void initializeRetriever(@NonNull MediaMetadataRetriever retriever);
