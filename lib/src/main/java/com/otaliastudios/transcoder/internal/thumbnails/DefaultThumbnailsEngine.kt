@@ -389,7 +389,12 @@ class DefaultThumbnailsEngine(
 
     override fun cleanup() {
         runCatching { stubs.clear() }
-        runCatching { segments.release() }
+        try {
+            runCatching { segments.release() }
+        }
+        catch (e: IllegalStateException) {
+            log.e("Codec already released! ${e.stackTrace}")
+        }
         runCatching { dataSources.release() }
     }
 
