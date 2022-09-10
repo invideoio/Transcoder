@@ -392,8 +392,8 @@ class DefaultThumbnailsEngine(
         try {
             runCatching { segments.release() }
         }
-        catch (e: IllegalStateException) {
-            log.e("Codec already released! ${e.stackTrace}")
+        catch (_: IllegalStateException) {
+            
         }
         runCatching { dataSources.release() }
     }
