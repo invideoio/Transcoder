@@ -309,7 +309,11 @@ class DefaultThumbnailsEngine(
             if (completed || stubs.isEmpty()) {
                 log.i("loop broken $stubs $hasMoreRequestsIncoming")
                 if (!hasMoreRequestsIncoming) {
-                    segments.release()
+                    try {
+                        segments.release()
+                    }
+                    catch (_: IllegalStateException) {
+                    }
                 }
                 break
             } else if (!advanced) {
