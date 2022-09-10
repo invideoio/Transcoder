@@ -309,7 +309,11 @@ class DefaultThumbnailsEngine(
             if (completed || stubs.isEmpty()) {
                 log.i("loop broken $stubs $hasMoreRequestsIncoming")
                 if (!hasMoreRequestsIncoming) {
-                    segments.release()
+                    try {
+                        segments.release()
+                    }
+                    catch (_: IllegalStateException) {
+                    }
                 }
                 break
             } else if (!advanced) {
@@ -389,12 +393,7 @@ class DefaultThumbnailsEngine(
 
     override fun cleanup() {
         runCatching { stubs.clear() }
-        try {
-            runCatching { segments.release() }
-        }
-        catch (_: IllegalStateException) {
-            
-        }
+        runCatching { segments.release() }
         runCatching { dataSources.release() }
     }
 
