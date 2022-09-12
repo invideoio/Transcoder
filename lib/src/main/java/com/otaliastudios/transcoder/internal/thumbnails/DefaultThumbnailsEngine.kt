@@ -290,7 +290,7 @@ class DefaultThumbnailsEngine(
                     }
                     throw e
                 }
-            } catch (e: IllegalStateException) {
+            } catch (e: Exception) {
                 val path = stub?.request?.sourcePath()
                 if (path != null) {
                     val dataSource = getDataSourceByPath(path)
