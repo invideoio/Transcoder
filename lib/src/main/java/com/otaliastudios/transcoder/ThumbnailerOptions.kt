@@ -6,6 +6,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import com.otaliastudios.transcoder.internal.codec.TranscoderEventsListener
 import com.otaliastudios.transcoder.internal.thumbnails.ThumbnailsEngine
 import com.otaliastudios.transcoder.resize.ExactResizer
 import com.otaliastudios.transcoder.resize.MultiResizer
@@ -24,7 +25,8 @@ class ThumbnailerOptions(
     val rotation: Int,
     val thumbnailRequests: List<ThumbnailRequest>,
     val listener: ThumbnailerListener?,
-    val listenerHandler: Handler
+    val listenerHandler: Handler,
+    val eventListener: TranscoderEventsListener?,
 ) {
 
     class Builder {
@@ -36,6 +38,7 @@ class ThumbnailerOptions(
         private var rotation = 0
         private var listener: ThumbnailerListener? = null
         private var listenerHandler: Handler? = null
+        private var eventListener: TranscoderEventsListener? = null
 
         fun addDataSource(dataSource: DataSource) = this.also {
             dataSources.add(dataSource)
@@ -82,6 +85,9 @@ class ThumbnailerOptions(
         fun setListener(listener: ThumbnailerListener) = this.also {
             this.listener = listener
         }
+        fun setEventListener(listener: TranscoderEventsListener) = this.also {
+            this.eventListener = listener
+        }
 
         fun build(): ThumbnailerOptions {
 //            require(dataSources.isNotEmpty()) {
@@ -97,7 +103,8 @@ class ThumbnailerOptions(
                 rotation = rotation,
                 thumbnailRequests = thumbnailRequests.toList(),
                 listener = listener,
-                listenerHandler = listenerHandler
+                listenerHandler = listenerHandler,
+                eventListener = eventListener
             )
         }
 

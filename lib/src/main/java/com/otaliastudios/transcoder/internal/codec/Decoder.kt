@@ -36,6 +36,7 @@ class Decoder(
     private val format: MediaFormat, // source.getTrackFormat(track)
     continuous: Boolean, // relevant if the source sends no-render chunks. should we compensate or not?
     private val useSwFor4K: Boolean = false,
+    private val eventListener: TranscoderEventsListener? = null,
     val shouldFlush: (() -> Boolean)? = null
 ) : QueuedStep<ReaderData, ReaderChannel, DecoderData, DecoderChannel>(), ReaderChannel {
 
@@ -146,6 +147,7 @@ class Decoder(
             codec.configure(format, surface, null, 0)
         }
         catch (e: Exception) {
+            eventListener?.onDecoderConfigureFailure(codec.name, format, e)
             if(BuildConfig.DEBUG) {
                 log.e("Failed while configuring codec ${codec.name} for format $format")
                 logCodecException(e)
@@ -162,6 +164,7 @@ class Decoder(
             codec.start()
         }
         catch (e: Exception) {
+            eventListener?.onDecoderStartFailure(codec.name, format, e)
             if(BuildConfig.DEBUG) {
                 log.e("Failed while starting codec ${codec.name} for format $format")
                 logCodecException(e)
@@ -283,7 +286,13 @@ class Decoder(
 
     override fun release() {
         log.i("release(): releasing codec. dequeuedInputs=$dequeuedInputs dequeuedOutputs=$dequeuedOutputs")
-        codec.stop()
-        codec.release()
+        try {
+            codec.stop()
+            codec.release()
+        }
+        catch (e : Exception) {
+            eventListener?.onDecoderReleaseFailure(codec.name, format, e)
+            throw e
+        }
     }
 }
