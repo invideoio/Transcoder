@@ -196,7 +196,7 @@ class DefaultThumbnailsEngine(
 
         val nextKeyFrameIndex = when {
             searchIndex >= 0 -> searchIndex
-            searchIndex < 0 -> {
+            else -> {
                 val index = -searchIndex - 1
                 when {
                     index >= keyFrameTimestamps.size -> {
@@ -212,9 +212,6 @@ class DefaultThumbnailsEngine(
                         -1 // will never reach here. kotlin is stupid
                     }
                 }
-            }
-            else -> {
-                -1 // will never reach here. kotlin is stupid
             }
         }
 
