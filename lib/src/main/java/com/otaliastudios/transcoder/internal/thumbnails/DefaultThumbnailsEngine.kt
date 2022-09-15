@@ -8,6 +8,7 @@ import com.otaliastudios.transcoder.internal.CustomSegments
 import com.otaliastudios.transcoder.internal.DataSources
 import com.otaliastudios.transcoder.internal.Tracks
 import com.otaliastudios.transcoder.internal.codec.Decoder
+import com.otaliastudios.transcoder.internal.codec.TranscoderEventsListener
 import com.otaliastudios.transcoder.internal.data.Reader
 import com.otaliastudios.transcoder.internal.data.Seeker
 import com.otaliastudios.transcoder.internal.pipeline.Pipeline
@@ -36,7 +37,8 @@ import java.util.ArrayList
 class DefaultThumbnailsEngine(
     private val dataSources: DataSources,
     private val rotation: Int,
-    resizer: Resizer
+    resizer: Resizer,
+    private val eventListener: TranscoderEventsListener?
 ) : ThumbnailsEngine() {
 
     private var shouldSeek = true
@@ -146,7 +148,7 @@ class DefaultThumbnailsEngine(
                 Pair(seekUs, seek)
             } +
                 Reader(source, type) +
-                Decoder(source.getTrackFormat(type)!!, continuous = false, useSwFor4K = true) {
+                Decoder(source.getTrackFormat(type)!!, continuous = false, useSwFor4K = true, eventListener) {
                     shouldFlush.also {
                         shouldFlush = false
                     }
@@ -290,7 +292,7 @@ class DefaultThumbnailsEngine(
                     }
                     throw e
                 }
-            } catch (e: IllegalStateException) {
+            } catch (e: Exception) {
                 val path = stub?.request?.sourcePath()
                 if (path != null) {
                     val dataSource = getDataSourceByPath(path)
@@ -311,8 +313,8 @@ class DefaultThumbnailsEngine(
                 if (!hasMoreRequestsIncoming) {
                     try {
                         segments.release()
-                    }
-                    catch (_: IllegalStateException) {
+                    } catch (e: IllegalStateException) {
+
                     }
                 }
                 break

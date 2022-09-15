@@ -52,7 +52,8 @@ abstract class ThumbnailsEngine {
             val engine = DefaultThumbnailsEngine(
                 dataSources = DataSources(options),
                 rotation = options.rotation,
-                resizer = options.resizer
+                resizer = options.resizer,
+                eventListener = options.eventListener
             )
             return engine
         }
