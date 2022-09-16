@@ -130,7 +130,13 @@ public abstract class DefaultDataSource implements DataSource {
                 if (!keyFrameTimestamps.isEmpty() && sampleTime <= keyFrameTimestamps.get(keyFrameTimestamps.size() - 1)) {
                     Collections.sort(keyFrameTimestamps);
                 }
-                keyFrameTimestamps.add(sampleTime);
+                // list is ordered, so only last item can be same.
+                if (keyFrameTimestamps.isEmpty() || keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) != sampleTime) {
+                    keyFrameTimestamps.add(sampleTime);
+                } else {
+                    sampleTime = -1;
+                    break;
+                }
             }
             mExtractor.seekTo(sampleTime + SEEK_THRESHOLD, MediaExtractor.SEEK_TO_NEXT_SYNC);
             lastSampleTime = sampleTime;
