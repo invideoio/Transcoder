@@ -131,7 +131,7 @@ public abstract class DefaultDataSource implements DataSource {
                     Collections.sort(keyFrameTimestamps);
                 }
                 // list is ordered, so only last item can be same.
-                if (keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) != sampleTime) {
+                if (keyFrameTimestamps.isEmpty() || keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) != sampleTime) {
                     keyFrameTimestamps.add(sampleTime);
                 }
             }
