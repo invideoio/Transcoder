@@ -130,7 +130,8 @@ public abstract class DefaultDataSource implements DataSource {
                 if (!keyFrameTimestamps.isEmpty() && sampleTime <= keyFrameTimestamps.get(keyFrameTimestamps.size() - 1)) {
                     Collections.sort(keyFrameTimestamps);
                 }
-                if (!keyFrameTimestamps.contains(sampleTime)) {
+                // list is ordered, so only last item can be same.
+                if (keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) != sampleTime) {
                     keyFrameTimestamps.add(sampleTime);
                 }
             }
