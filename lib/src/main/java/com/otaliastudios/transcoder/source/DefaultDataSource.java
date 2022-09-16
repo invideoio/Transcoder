@@ -133,15 +133,15 @@ public abstract class DefaultDataSource implements DataSource {
                 // list is ordered, so only last item can be same.
                 if (keyFrameTimestamps.isEmpty() || keyFrameTimestamps.get(keyFrameTimestamps.size() - 1) != sampleTime) {
                     keyFrameTimestamps.add(sampleTime);
+                } else {
+                    sampleTime = -1;
+                    break;
                 }
             }
             mExtractor.seekTo(sampleTime + SEEK_THRESHOLD, MediaExtractor.SEEK_TO_NEXT_SYNC);
             lastSampleTime = sampleTime;
             sampleTime = mExtractor.getSampleTime();
             count++;
-        }
-        if (keyFrameTimestamps.size() <= 1) {
-            return -1;
         }
 //        LOG.i("keyFrameStopCount:" + keyFrameTimestamps);
         return sampleTime;
