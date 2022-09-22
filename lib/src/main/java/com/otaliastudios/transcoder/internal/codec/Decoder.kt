@@ -292,7 +292,6 @@ class Decoder(
         }
         catch (e : Exception) {
             eventListener?.onDecoderReleaseFailure(codec.name, format, e)
-            throw e
         }
     }
 }
