@@ -11,8 +11,8 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31")
-        classpath("com.android.tools.build:gradle:4.1.3")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.20")
+        classpath("com.android.tools.build:gradle:7.3.1")
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.4.30") // publisher uses 1.4.20 which goes OOM
         classpath("io.deepmedia.tools:publisher:0.5.0")
     }

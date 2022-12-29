@@ -12,10 +12,8 @@ plugins {
 android {
     setCompileSdkVersion(property("compileSdkVersion") as Int)
     defaultConfig {
-        setMinSdkVersion(property("minSdkVersion") as Int)
-        setTargetSdkVersion(property("targetSdkVersion") as Int)
-        versionCode = 1
-        versionName = "0.10.3"
+        minSdk = (property("minSdkVersion") as Int)
+        targetSdk = (property("targetSdkVersion") as Int)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes["release"].isMinifyEnabled = false
@@ -26,8 +24,8 @@ android {
 
 dependencies {
     api("com.otaliastudios.opengl:egloo:0.6.0")
-    api("androidx.annotation:annotation:1.1.0")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
+    api("androidx.annotation:annotation:1.3.0")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
     androidTestImplementation("androidx.test:runner:1.3.0")
     androidTestImplementation("androidx.test:rules:1.3.0")
