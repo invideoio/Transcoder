@@ -1,7 +1,7 @@
-import io.deepmedia.tools.publisher.common.GithubScm
-import io.deepmedia.tools.publisher.common.License
-import io.deepmedia.tools.publisher.common.Release
-import io.deepmedia.tools.publisher.sonatype.Sonatype
+//import io.deepmedia.tools.publisher.common.GithubScm
+//import io.deepmedia.tools.publisher.common.License
+//import io.deepmedia.tools.publisher.common.Release
+//import io.deepmedia.tools.publisher.sonatype.Sonatype
 
 plugins {
     id("com.android.library")
