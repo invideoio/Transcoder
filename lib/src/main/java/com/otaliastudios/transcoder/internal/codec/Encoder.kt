@@ -52,6 +52,7 @@ class Encoder(
 
     companion object {
         private val ID = trackMapOf(AtomicInteger(0), AtomicInteger(0))
+        private const val timeoutUs = 5000L
     }
 
     private val type = if (surface != null) TrackType.VIDEO else TrackType.AUDIO
@@ -110,7 +111,7 @@ class Encoder(
     }
 
     override fun drain(): State<WriterData> {
-        val timeoutUs = if (eosReceivedButNotEnqueued) 5000L else 0L
+        val timeoutUs = if (eosReceivedButNotEnqueued) 5000L else timeoutUs
         return when (val result = codec.dequeueOutputBuffer(info, timeoutUs)) {
             INFO_TRY_AGAIN_LATER -> {
                 if (eosReceivedButNotEnqueued) {
