@@ -15,6 +15,7 @@ android {
         minSdk = (property("minSdkVersion") as Int)
         targetSdk = (property("targetSdkVersion") as Int)
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        namespace = "com.otaliastudios.transcoder"
     }
     buildTypes["release"].isMinifyEnabled = false
     buildFeatures {
